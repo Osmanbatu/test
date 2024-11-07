@@ -43,3 +43,53 @@ Features:
 Smart health monitoring devices (heart rate, sleep tracking)
 Air quality sensors
 Meditation and relaxation applications
+
+
+
+
+//this code was written on vivado
+// topmodule
+`timescale 1ns / 1ps
+module air_conditioning_control(
+    input x1,      // window1
+    input x2,      // window2
+    output reg y   // Air Conditioner
+);
+
+always @(*) begin
+    if (x1 == 0 && x2 == 0)
+        y = 1'b1;  // Both windows are closed, air conditioner is on (Y = 1)
+    else
+        y = 1'b0;  // At least one window is open, air conditioner is off (Y = 0)
+end
+
+endmodule
+
+// testbench
+`timescale 1ns / 1ps
+module tb_air_conditioning_control();
+
+   reg x1;
+    reg x2;
+    wire y;
+
+  // Instantiate the module under test (UUT)
+    air_conditioning_control uut (
+        .x1(x1),
+        .x2(x2),
+        .y(y)
+    );
+
+  initial begin
+        $monitor("X1=%b X2=%b Y=%b", x1, x2, y);
+
+   // Test all combinations of x1 and x2
+        x1 = 0; x2 = 0; #10; // Both windows closed, air conditioner should be on
+        x1 = 0; x2 = 1; #10; // One window open, air conditioner should be off
+        x1 = 1; x2 = 0; #10; // One window open, air conditioner should be off
+        x1 = 1; x2 = 1; #10; // Both windows open, air conditioner should be off
+        $finish;
+    end
+
+endmodule
+
