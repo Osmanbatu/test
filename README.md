@@ -51,11 +51,9 @@ Meditation and relaxation applications
 // topmodule
 `timescale 1ns / 1ps
 module air_conditioning_control(
-    input x1,      // window1
-    input x2,      // window2
-    output reg y   // Air Conditioner
+input x1,      // window1
+output reg y   // Air Conditioner
 );
-
 always @(*) begin
     if (x1 == 0 && x2 == 0)
         y = 1'b1;  // Both windows are closed, air conditioner is on (Y = 1)
@@ -64,32 +62,26 @@ always @(*) begin
 end
 
 endmodule
-
 // testbench
 `timescale 1ns / 1ps
 module tb_air_conditioning_control();
-
-   reg x1;
-    reg x2;
-    wire y;
-
-  // Instantiate the module under test (UUT)
-    air_conditioning_control uut (
-        .x1(x1),
-        .x2(x2),
-        .y(y)
-    );
-
-  initial begin
-        $monitor("X1=%b X2=%b Y=%b", x1, x2, y);
-
-   // Test all combinations of x1 and x2
-        x1 = 0; x2 = 0; #10; // Both windows closed, air conditioner should be on
-        x1 = 0; x2 = 1; #10; // One window open, air conditioner should be off
-        x1 = 1; x2 = 0; #10; // One window open, air conditioner should be off
-        x1 = 1; x2 = 1; #10; // Both windows open, air conditioner should be off
-        $finish;
-    end
-
+reg x1;
+reg x2;
+ wire y;
+// Instantiate the module under test (UUT)
+air_conditioning_control uut (
+.x1(x1),
+.x2(x2),
+.y(y)
+);
+initial begin
+$monitor("X1=%b X2=%b Y=%b", x1, x2, y);
+  // Test all combinations of x1 and x2
+x1 = 0; x2 = 0; #10; // Both windows closed, air conditioner should be on
+x1 = 0; x2 = 1; #10; // One window open, air conditioner should be off
+x1 = 1; x2 = 0; #10; // One window open, air conditioner should be off
+ x1 = 1; x2 = 1; #10; // Both windows open, air conditioner should be off
+$finish;
+ end
 endmodule
 
