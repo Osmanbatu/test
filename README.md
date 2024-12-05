@@ -85,3 +85,29 @@ $finish;
  end
 endmodule
 
+//structural modeling
+`timescale 1ns / 1ps
+
+module air_conditioning_control(
+    input x1,     // Window 1
+    input x2,     // Window 2
+    output y      // Air Conditioner
+);
+
+   wire not_x1;  // x1'in NOT çıkışı
+    wire not_x2;  // x2'in NOT çıkışı
+    wire and_out; // NOT kapılarının AND çıkışı
+
+   // NOT kapıları
+    not u1(not_x1, x1);
+    not u2(not_x2, x2);
+
+  // AND kapısı
+    and u3(and_out, not_x1, not_x2);
+
+  // Air conditioner output
+    assign y = and_out;
+
+endmodule
+
+
