@@ -111,3 +111,156 @@ module air_conditioning_control(
 endmodule
 
 
+
+Steps to Proceed
+Understand the System Requirements:
+
+Two inputs (x1 for Window 1 and x2 for Window 2).
+Output (y for Air Conditioner control).
+The Air Conditioner (y) is:
+ON (1) if both windows are closed (x1 = 0, x2 = 0).
+OFF (0) if either or both windows are open.
+State Table Diagram: Define the states for the system:
+
+States (S0-S3):
+
+S0: Both windows closed (x1 = 0, x2 = 0) → Air Conditioner ON.
+S1: Window 1 open (x1 = 1, x2 = 0) → Air Conditioner OFF.
+S2: Window 2 open (x1 = 0, x2 = 1) → Air Conditioner OFF.
+S3: Both windows open (x1 = 1, x2 = 1) → Air Conditioner OFF.
+State Transitions: Transitions occur based on the input changes (x1, x2).
+
+Current State	x1	x2	Next State	y (AC)
+S0	0	0	S0	1
+S0	0	1	S2	0
+S0	1	0	S1	0
+S0	1	1	S3	0
+S1	0	0	S0	1
+S1	0	1	S2	0
+S1	1	0	S1	0
+S1	1	1	S3	0
+S2	0	0	S0	1
+S2	0	1	S2	0
+S2	1	0	S1	0
+S2	1	1	S3	0
+S3	0	0	S0	1
+S3	0	1	S2	0
+S3	1	0	S1	0
+S3	1	1	S3	0
+Verilog Code for Sequential System
+Based on the state table, we implement a state machine in Verilog.
+
+State Encoding:
+S0: 00
+S1: 01
+S2: 10
+S3: 11
+Sequential Logic Design:
+Here is the Verilog code for the state machine:
+
+`timescale 1ns / 1ps
+
+module air_conditioning_fsm(
+    input clk,        // Clock signal
+    input reset,      // Reset signal
+    input x1,         // Window 1
+    input x2,         // Window 2
+    output reg y      // Air Conditioner control
+);
+
+  // State encoding
+    parameter S0 = 2'b00, // Both windows closed
+              S1 = 2'b01, // Window 1 open
+              S2 = 2'b10, // Window 2 open
+              S3 = 2'b11; // Both windows open
+
+   reg [1:0] state, next_state;
+
+   // State transition logic (combinational)
+    always @(*) begin
+        case (state)
+            S0: if (x1 == 0 && x2 == 0) next_state = S0;
+                else if (x1 == 1 && x2 == 0) next_state = S1;
+                else if (x1 == 0 && x2 == 1) next_state = S2;
+                else next_state = S3;
+
+ S1: if (x1 == 0 && x2 == 0) next_state = S0;
+                else if (x1 == 1 && x2 == 1) next_state = S3;
+                else if (x1 == 0 && x2 == 1) next_state = S2;
+                else next_state = S1;
+    S2: if (x1 == 0 && x2 == 0) next_state = S0;
+                else if (x1 == 1 && x2 == 1) next_state = S3;
+                else if (x1 == 1 && x2 == 0) next_state = S1;
+                else next_state = S2;
+
+ S3: if (x1 == 0 && x2 == 0) next_state = S0;
+                else if (x1 == 1 && x2 == 0) next_state = S1;
+                else if (x1 == 0 && x2 == 1) next_state = S2;
+                else next_state = S3;
+      default: next_state = S0;
+        endcase
+    end
+
+ // State update logic (sequential)
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            state <= S0;
+        else
+            state <= next_state;
+    end
+
+// Output logic
+    always @(*) begin
+        case (state)
+            S0: y = 1; // Air Conditioner ON
+            default: y = 0; // Air Conditioner OFF
+        endcase
+    end
+
+endmodule
+
+`timescale 1ns / 1ps
+
+module tb_air_conditioning_fsm();
+    reg clk;
+    reg reset;
+    reg x1, x2;
+    wire y;
+
+ // Instantiate the FSM
+    air_conditioning_fsm uut (
+        .clk(clk),
+        .reset(reset),
+        .x1(x1),
+        .x2(x2),
+        .y(y)
+    );
+
+  // Clock generation
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10 ns clock period
+    end
+
+  // Stimulus
+    initial begin
+        $monitor("Time=%0d, X1=%b, X2=%b, Y=%b", $time, x1, x2, y);
+
+ // Initialize inputs
+        reset = 1; x1 = 0; x2 = 0;
+        #10 reset = 0;
+
+  // Test cases
+        #10 x1 = 0; x2 = 0; // Both windows closed
+        #10 x1 = 1; x2 = 0; // Window 1 open
+        #10 x1 = 0; x2 = 1; // Window 2 open
+        #10 x1 = 1; x2 = 1; // Both windows open
+        #10 x1 = 0; x2 = 0; // Back to initial state
+
+  #20 $finish;
+    end
+endmodule
+
+
+
+
