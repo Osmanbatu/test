@@ -261,6 +261,108 @@ module tb_air_conditioning_fsm();
     end
 endmodule
 
+`timescale 1ns / 1ps
 
+module air_conditioning_fsm(
+    input clk,        // Clock signal
+    input reset,      // Reset signal
+    input x1,         // Window 1 input
+    input x2,         // Window 2 input
+    output reg y      // Air Conditioner control output
+);
+
+ // State encoding
+  parameter S0 = 2'b00, // Both windows closed
+              S1 = 2'b01, // Window 1 open
+              S2 = 2'b10, // Window 2 open
+              S3 = 2'b11; // Both windows open
+
+   reg [1:0] state, next_state;
+
+ // State transition logic (combinational)
+  always @(*) begin
+        case (state)
+            S0: if (x1 == 0 && x2 == 0) next_state = S0; // Stay in S0
+                else if (x1 == 1 && x2 == 0) next_state = S1; // Go to S1
+                else if (x1 == 0 && x2 == 1) next_state = S2; // Go to S2
+                else next_state = S3; // Go to S3
+
+S1: if (x1 == 0 && x2 == 0) next_state = S0; // Go to S0
+                else if (x1 == 1 && x2 == 1) next_state = S3; // Go to S3
+                else if (x1 == 0 && x2 == 1) next_state = S2; // Go to S2
+                else next_state = S1; // Stay in S1
+
+ S2: if (x1 == 0 && x2 == 0) next_state = S0; // Go to S0
+                else if (x1 == 1 && x2 == 1) next_state = S3; // Go to S3
+                else if (x1 == 1 && x2 == 0) next_state = S1; // Go to S1
+                else next_state = S2; // Stay in S2
+
+ S3: if (x1 == 0 && x2 == 0) next_state = S0; // Go to S0
+                else if (x1 == 1 && x2 == 0) next_state = S1; // Go to S1
+                else if (x1 == 0 && x2 == 1) next_state = S2; // Go to S2
+                else next_state = S3; // Stay in S3
+    default: next_state = S0; // Default state
+        endcase
+    end
+
+// State update logic (sequential)
+ always @(posedge clk or posedge reset) begin
+        if (reset)
+            state <= S0; // Reset to initial state
+        else
+            state <= next_state; // Update to the next state
+    end
+
+ // Output logic (combinational)
+ always @(*) begin
+        case (state)
+            S0: y = 1; // Air Conditioner ON
+            default: y = 0; // Air Conditioner OFF
+        endcase
+    end
+
+endmodule
+
+`timescale 1ns / 1ps
+
+module tb_air_conditioning_fsm();
+    reg clk;
+    reg reset;
+    reg x1, x2;
+    wire y;
+
+    // Instantiate the FSM
+ air_conditioning_fsm uut (
+        .clk(clk),
+        .reset(reset),
+        .x1(x1),
+        .x2(x2),
+        .y(y)
+    );
+
+    // Clock generation
+ initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10 ns clock period
+    end
+
+    // Test cases
+  initial begin
+        $monitor("Time=%0d, X1=%b, X2=%b, Y=%b", $time, x1, x2, y);
+
+        // Initialize inputs
+ reset = 1; x1 = 0; x2 = 0;
+        #10 reset = 0;
+
+        // Test various states
+ #10 x1 = 0; x2 = 0; // Both windows closed
+        #10 x1 = 1; x2 = 0; // Window 1 open
+        #10 x1 = 0; x2 = 1; // Window 2 open
+        #10 x1 = 1; x2 = 1; // Both windows open
+        #10 x1 = 0; x2 = 0; // Back to initial state
+
+   #20 $finish;
+    end
+endmodule
 
 
