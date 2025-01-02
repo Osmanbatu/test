@@ -366,3 +366,137 @@ module tb_air_conditioning_fsm();
 endmodule
 
 
+
+
+//lastproject
+
+`timescale 1ns / 1ps
+
+module home_automation(
+    input clk,
+    input reset,
+    input motion_sensor,
+    input x1,
+    input x2,
+    input door_sensor,
+    input remote_light,
+    output reg light_status,
+    output reg ac_status,
+    output reg alarm_status,
+    output reg energy_usage
+);
+
+// Light Control (simple example using motion sensor or remote control)
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            light_status <= 0;
+        else
+            light_status <= motion_sensor || remote_light;
+    end
+
+ // HVAC Control
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            ac_status <= 0;
+        else
+            ac_status <= (x1 == 0 && x2 == 0);
+    end
+
+ // Security Alarm
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            alarm_status <= 0;
+        else
+            alarm_status <= door_sensor;
+    end
+
+  // Energy Usage (Example: On if either AC or lights are active)
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            energy_usage <= 0;
+else
+            energy_usage <= light_status || ac_status;
+   end
+
+endmodule
+
+
+//testbench
+`timescale 1ns / 1ps
+
+module tb_home_automation();
+
+// Inputs and Outputs
+    reg clk;
+    reg reset;
+    reg motion_sensor;
+    reg x1, x2;
+    reg door_sensor;
+    reg remote_light;
+    wire light_status;
+    wire ac_status;
+    wire alarm_status;
+    wire energy_usage;
+
+ // Instantiate the `home_automation` module
+    home_automation uut (
+        .clk(clk),
+        .reset(reset),
+        .motion_sensor(motion_sensor),
+        .x1(x1),
+        .x2(x2),
+        .door_sensor(door_sensor),
+        .remote_light(remote_light),
+        .light_status(light_status),
+        .ac_status(ac_status),
+        .alarm_status(alarm_status),
+        .energy_usage(energy_usage)
+    );
+
+  // Clock Generation
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10ns clock period
+    end
+
+// Test Cases
+    initial begin
+        $monitor("Time=%0d | Motion=%b | X1=%b | X2=%b | Door=%b | Remote=%b || Light=%b | AC=%b | Alarm=%b | Energy=%b",
+                 $time, motion_sensor, x1, x2, door_sensor, remote_light, light_status, ac_status, alarm_status, energy_usage);
+
+  // Initialize Inputs
+        reset = 1;
+        motion_sensor = 0;
+        x1 = 0; x2 = 0;
+        door_sensor = 0;
+        remote_light = 0;
+
+   // Reset System
+        #10 reset = 0;
+
+  // Test Case 1: Motion detected
+        #10 motion_sensor = 1; // Lights on
+        #10 motion_sensor = 0;
+
+  // Test Case 2: Remote light control
+        #10 remote_light = 1; // Lights on
+        #10 remote_light = 0;
+
+  // Test Case 3: HVAC Control
+        #10 x1 = 0; x2 = 0; // AC on
+        #10 x1 = 1;         // AC off
+        #10 x1 = 0; x2 = 1; // AC off
+        #10 x1 = 1; x2 = 1; // AC off
+        #10 x1 = 0; x2 = 0; // AC on
+
+  // Test Case 4: Door sensor
+        #10 door_sensor = 1; // Alarm on
+        #10 door_sensor = 0;
+
+ // End Simulation
+        #50 $finish;
+    end
+
+endmodule
+
+
